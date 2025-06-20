@@ -1,0 +1,29 @@
+.emergency {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.emergency::-webkit-scrollbar {
+  display: none;
+}
+.emergency ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.emergency li {
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+.emergency li strong {
+  color: #333;
+}
+.emergency-note {
+  font-size: 0.85rem;
+  color: #888;
+  text-align: center;
+  margin-top: 10px;
+}
