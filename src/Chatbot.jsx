@@ -40,7 +40,7 @@ const Chatbot = ({ isOpen, setChatOpen }) => {
     await delay(3000);
 
     try {
-      const response = await fetch("http://127.0.0.1:5000/chat", {
+      const response = await fetch("https://zenback-3.onrender.com/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include", // Send session data
