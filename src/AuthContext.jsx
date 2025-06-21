@@ -14,7 +14,7 @@ export function AuthProvider({ children }) {
 
   const checkAuth = async () => {
     try {
-      const res = await fetch('http://localhost:5000/dashboard', {
+      const res = await fetch('https://zenback-3.onrender.com/dashboard', {
         credentials: 'include'
       });
       if (res.ok) {
