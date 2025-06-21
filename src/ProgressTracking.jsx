@@ -20,7 +20,7 @@ const ProgressTracking = () => {
 
   const fetchProgressData = async () => {
     try {
-      const response = await fetch('http://localhost:5000/progress-tracking', {
+      const response = await fetch('https://zenback-3.onrender.com/progress-tracking', {
         credentials: 'include'
       });
       const data = await response.json();
