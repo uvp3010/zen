@@ -92,7 +92,7 @@ const Profile = () => {
     const payload = { ...formData, avatar: avatarToSave };
 
     try {
-      const response = await fetch('http://localhost:5000/update-profile', {
+      const response = await fetch('https://zenback-3.onrender.com/update-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
