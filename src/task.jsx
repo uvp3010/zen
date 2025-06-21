@@ -360,7 +360,7 @@ const Task = () => {
 
   // Fetch tasks from the backend on mount
   useEffect(() => {
-    fetch("http://localhost:5000/tasks", { credentials: "include" })
+    fetch("https://zenback-3.onrender.com/tasks", { credentials: "include" })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         return res.json();
