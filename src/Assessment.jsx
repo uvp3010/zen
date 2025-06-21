@@ -200,7 +200,7 @@ const Assessment = () => {
   // Save the assessment results to the backend
   const saveAssessment = async (totalScore, result) => {
     try {
-      const response = await fetch('http://localhost:5000/save-assessment', {
+      const response = await fetch('https://zenback-3.onrender.com/save-assessment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include', // to include session cookies
