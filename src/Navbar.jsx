@@ -33,28 +33,34 @@ const Navbar = () => {
     fetchProfile();
   }, []);
 
-  const handleLogout = async () => {
-    // Confirm with the user before logging out
-    const confirmLogout = window.confirm("Are you sure you want to logout?");
-    if (!confirmLogout) return;
+const handleLogout = async () => {
+  const confirmLogout = window.confirm("Are you sure you want to logout?");
+  if (!confirmLogout) return;
 
-    try {
-      const response = await fetch('https://zenback-3.onrender.com/logout', {
-        method: 'POST',
-        credentials: 'include',
-      });
-      if (response.ok) {
-        const data = await response.json();
-        alert(data.message); // Show logout confirmation message
-        navigate('/');      // Navigate to the home route
-      } else {
-        alert('Logout failed!');
-      }
-    } catch (error) {
-      console.error('Error logging out:', error);
-      alert('Error logging out.');
+  try {
+    const response = await fetch('https://zenback-3.onrender.com/logout', {
+      method: 'POST',
+      credentials: 'include', // Important: keeps session cookie context
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      alert(data.message || "Logged out successfully.");
+
+      // 🧹 Clear anything stored client-side (if any)
+      sessionStorage.clear(); 
+      localStorage.clear(); // if you used it for any user info
+
+      // 🚪 Redirect to homepage or login
+      navigate('/');
+    } else {
+      alert("Logout failed. Please try again.");
     }
-  };
+  } catch (err) {
+    console.error("Logout error:", err);
+    alert("Something went wrong during logout.");
+  }
+};
 
   return (
     <nav className="bg-slate-900/80 backdrop-blur-xl fixed w-full top-0 z-50 shadow-xl">
