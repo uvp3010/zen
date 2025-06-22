@@ -1,17 +1,26 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // 👈 New loading state
+  const [funnyNotice, setFunnyNotice] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.hackerMode) {
+      setFunnyNotice("🕵️‍♂️ Trying to sneak into the dashboard, huh? First log in like a normal human.");
+    }
+  }, [location]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true); // 👈 Start loading
+    setIsLoading(true);
     setMessage("Please wait, the server is stretching its limbs 🐢 (free tier life...)");
 
     try {
@@ -21,6 +30,7 @@ const Login = () => {
         { withCredentials: true }
       );
       setMessage(response.data.message);
+      sessionStorage.setItem("isLoggedIn", "true");
       navigate("/dashboard");
     } catch (error) {
       console.error("Login error:", error);
@@ -28,7 +38,7 @@ const Login = () => {
         error.response?.data?.message || "An error occurred during login."
       );
     } finally {
-      setIsLoading(false); // 👈 Stop loading
+      setIsLoading(false);
     }
   };
 
@@ -38,11 +48,19 @@ const Login = () => {
         <h2 className="text-3xl font-semibold mb-4 text-center text-white">
           Log In to Zen
         </h2>
+
+        {funnyNotice && (
+          <div className="mb-4 text-yellow-400 text-sm text-center font-mono">
+            {funnyNotice}
+          </div>
+        )}
+
         {message && (
           <p className={`mb-4 text-center ${isLoading ? 'text-emerald-400' : 'text-red-500'}`}>
             {message}
           </p>
         )}
+
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label htmlFor="username" className="block text-slate-300 mb-2">
@@ -57,9 +75,10 @@ const Login = () => {
               className="w-full p-2 bg-slate-700 text-white border border-slate-600 rounded-md focus:outline-none focus:ring focus:ring-emerald-400"
               placeholder="yourUsername"
               required
-              disabled={isLoading} // Optional: disable inputs while loading
+              disabled={isLoading}
             />
           </div>
+
           <div className="mb-6">
             <label htmlFor="password" className="block text-slate-300 mb-2">
               Password
@@ -76,6 +95,7 @@ const Login = () => {
               disabled={isLoading}
             />
           </div>
+
           <button
             type="submit"
             className="w-full py-2 bg-emerald-400 text-slate-900 rounded-md hover:bg-emerald-500 transition-colors"
@@ -85,6 +105,7 @@ const Login = () => {
           </button>
         </form>
       </div>
+
       <div className="mt-4">
         <p className="text-slate-300">
           Don&apos;t have an account?{' '}
@@ -98,3 +119,4 @@ const Login = () => {
 };
 
 export default Login;
+
