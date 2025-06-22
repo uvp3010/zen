@@ -12,6 +12,7 @@ import Sentiment from './sentiment'
 import Profile from './Profile'
 import ChatAvatar from './ChatAvatar';
 import NotFound from './NotFound'; 
+import ProtectedRoute from './ProtectedRoute'
 const App = () => {
   return (
     <Router>
@@ -22,7 +23,9 @@ const App = () => {
         <Route path="/support-resources" element={<SupportResources />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard" element=  {<ProtectedRoute>
+      <Dashboard />
+    </ProtectedRoute>/>}
         <Route path="/Task" element={<Task/>} />
         <Route path="/sentiment" element={<Sentiment/>} />
         <Route path="/Profile" element={<Profile/>} />
