@@ -11,6 +11,7 @@ import Task from './task'
 import Sentiment from './sentiment'
 import Profile from './Profile'
 import ChatAvatar from './ChatAvatar';
+import NotFound from './NotFound'; 
 const App = () => {
   return (
     <Router>
@@ -26,6 +27,7 @@ const App = () => {
         <Route path="/sentiment" element={<Sentiment/>} />
         <Route path="/Profile" element={<Profile/>} />
         <Route path="/ChatAvatar" element={<ChatAvatar/>} />
+         <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
   );
