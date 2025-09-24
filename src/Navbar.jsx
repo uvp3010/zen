@@ -19,7 +19,7 @@ const Navbar = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await fetch('https://zenback-3.onrender.com/dashboard', {
+        const response = await fetch('https://zenback.onrender.com/dashboard', {
           credentials: 'include',
         });
         const data = await response.json();
