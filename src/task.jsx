@@ -360,7 +360,7 @@ const Task = () => {
 
   // Fetch tasks from the backend on mount
   useEffect(() => {
-    fetch("https://zenback-3.onrender.com/tasks", { credentials: "include" })
+    fetch("https://zenback.onrender.com/tasks", { credentials: "include" })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         return res.json();
@@ -386,7 +386,7 @@ const Task = () => {
   // Mark the active task as complete, update backend, and update local state
   const completeTask = () => {
     if (activeTask && !activeTask.completed) {
-      fetch("https://zenback-3.onrender.com/complete-task", {
+      fetch("https://zenback.onrender.com/complete-task", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
