@@ -25,7 +25,7 @@ const Login = () => {
 
     try {
       const response = await axios.post(
-        "https://zenback-3.onrender.com/login",
+        "https://zenback.onrender.com/login",
         { username, password },
         { withCredentials: true }
       );
