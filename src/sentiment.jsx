@@ -418,7 +418,7 @@ function Sentiment() {
     // Simulated backend call delay
     setTimeout(async () => {
       try {
-        const response = await fetch('https://zenback-3.onrender.com/predict', {
+        const response = await fetch('https://zenback.onrender.com/predict', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
