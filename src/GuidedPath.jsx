@@ -14,7 +14,7 @@ const Task = () => {
 
   // Fetch tasks from the backend on component mount
   useEffect(() => {
-    fetch("http://localhost:5000/tasks", {
+    fetch("https://zenback.onrender.com/tasks", {
       credentials: "include",
     })
       .then((res) => res.json())
