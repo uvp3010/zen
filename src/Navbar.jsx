@@ -38,7 +38,7 @@ const handleLogout = async () => {
   if (!confirmLogout) return;
 
   try {
-    const response = await fetch('https://zenback-3.onrender.com/logout', {
+    const response = await fetch('https://zenback.onrender.com/logout', {
       method: 'POST',
       credentials: 'include', // Important: keeps session cookie context
     });
@@ -135,15 +135,6 @@ const handleLogout = async () => {
                       className="px-4 py-2 flex items-center text-slate-300 hover:text-emerald-400"
                     >
                       <span className="mr-2">📊</span> Mental Assessment
-                    </Link>
-                  </li>
-                  <li className="hover:bg-slate-700/30 transition-colors">
-                    <Link
-                      to="/assessment-model"
-                      onClick={() => setDropdownOpen(false)}
-                      className="px-4 py-2 flex items-center text-slate-300 hover:text-indigo-400"
-                    >
-                      <span className="mr-2">🤖</span> Model Assessment
                     </Link>
                   </li>
                   <li className="hover:bg-slate-700/30 transition-colors">
