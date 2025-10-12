@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { FaArrowLeft } from 'react-icons/fa';
@@ -23,6 +23,14 @@ const Assessment = () => {
   const [showSchedule, setShowSchedule] = useState(false);
   const [appointmentDate, setAppointmentDate] = useState('');
   const [popup, setPopup] = useState(null);
+
+  // Auto-hide popup after 3 seconds
+  useEffect(() => {
+    if (popup) {
+      const timer = setTimeout(() => setPopup(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [popup]);
 
   // Save assessment to backend
   const saveAssessment = async (totalScore, result) => {
@@ -54,13 +62,22 @@ const Assessment = () => {
     return { ...result, score: totalScore };
   };
 
-  // When finished
+  // Finish assessment
   const handleFinish = () => {
     const totalScore = answers.reduce((sum, val) => sum + val, 0);
     const result = calculateResults(totalScore);
     saveAssessment(totalScore, result);
     setResultData(result);
     setShowResults(true);
+
+    // Auto-prompt appointment if condition is serious
+    if (totalScore >= 10) {
+      setTimeout(() => setShowSchedule(true), 1500);
+      setPopup({
+        type: 'warning',
+        message: 'Your condition seems concerning. Please schedule an appointment.',
+      });
+    }
   };
 
   // Schedule appointment
@@ -80,7 +97,7 @@ const Assessment = () => {
       } else {
         setPopup({ type: 'error', message: data.message });
       }
-    } catch (err) {
+    } catch {
       setPopup({ type: 'error', message: 'Failed to schedule appointment' });
     }
   };
@@ -92,11 +109,7 @@ const Assessment = () => {
           <FaArrowLeft className="mr-2" /> Back to Dashboard
         </Link>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
           <h2 className="text-4xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
             Mental Health Assessment (PHQ-9)
           </h2>
@@ -105,7 +118,6 @@ const Assessment = () => {
         <div className="bg-white/5 backdrop-blur-md p-8 rounded-2xl border border-white/10 shadow-2xl">
           {!showResults ? (
             <>
-              {/* Progress Bar */}
               <div className="relative h-2 bg-gray-700 rounded-full mb-8">
                 <div
                   className="h-full bg-emerald-400 rounded-full transition-all"
@@ -185,24 +197,14 @@ const Assessment = () => {
                 <p className="text-sm mt-2">Score: {resultData.score}</p>
               </div>
 
-              <div className="space-y-4">
+              {resultData.score < 10 && (
                 <button
                   onClick={() => setShowSchedule(true)}
                   className="px-6 py-2 bg-emerald-400 text-gray-900 rounded-lg hover:bg-emerald-500 transition-colors"
                 >
                   Schedule Appointment
                 </button>
-                <button
-                  onClick={() => {
-                    setShowResults(false);
-                    setCurrentQuestion(0);
-                    setAnswers(Array(questions.length).fill(0));
-                  }}
-                  className="px-6 py-2 bg-gray-700 text-emerald-400 rounded-lg hover:bg-gray-600 transition-colors"
-                >
-                  Retake Assessment
-                </button>
-              </div>
+              )}
             </motion.div>
           )}
         </div>
@@ -249,16 +251,20 @@ const Assessment = () => {
         )}
       </AnimatePresence>
 
-      {/* Success/Error Popup */}
+      {/* Popup */}
       <AnimatePresence>
         {popup && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className={`fixed top-6 right-6 px-6 py-3 rounded-xl shadow-lg ${
-              popup.type === 'success' ? 'bg-emerald-500' : 'bg-red-500'
-            } text-white`}
+            className={`fixed top-6 right-6 px-6 py-3 rounded-xl shadow-lg text-white ${
+              popup.type === 'success'
+                ? 'bg-emerald-500'
+                : popup.type === 'warning'
+                ? 'bg-yellow-500'
+                : 'bg-red-500'
+            }`}
           >
             {popup.message}
           </motion.div>
