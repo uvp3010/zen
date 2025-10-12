@@ -1,184 +1,269 @@
-import React, { useState, useEffect } from "react";
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { FaArrowLeft } from 'react-icons/fa';
+
+const questions = [
+  "Little interest or pleasure in doing things?",
+  "Feeling down, depressed, or hopeless?",
+  "Trouble falling/staying asleep, or sleeping too much?",
+  "Feeling tired or having little energy?",
+  "Poor appetite or overeating?",
+  "Feeling bad about yourself—or that you are a failure or have let yourself or your family down?",
+  "Trouble concentrating on things, such as reading the newspaper or watching television?",
+  "Moving or speaking so slowly that other people could have noticed? Or being so fidgety or restless that you have been moving around a lot more than usual?",
+  "Thoughts that you would be better off dead or of hurting yourself in some way?",
+];
 
 const Assessment = () => {
-  const [answers, setAnswers] = useState(Array(9).fill(null));
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [answers, setAnswers] = useState(Array(questions.length).fill(0));
   const [showResults, setShowResults] = useState(false);
-  const [result, setResult] = useState("");
-  const [totalScore, setTotalScore] = useState(0);
-  const [showPopup, setShowPopup] = useState(false);
-  const [appointmentDate, setAppointmentDate] = useState("");
+  const [resultData, setResultData] = useState(null);
+  const [showSchedule, setShowSchedule] = useState(false);
+  const [appointmentDate, setAppointmentDate] = useState('');
+  const [popup, setPopup] = useState(null);
 
-  const questions = [
-    "Little interest or pleasure in doing things",
-    "Feeling down, depressed, or hopeless",
-    "Trouble falling or staying asleep, or sleeping too much",
-    "Feeling tired or having little energy",
-    "Poor appetite or overeating",
-    "Feeling bad about yourself — or that you are a failure or have let yourself or your family down",
-    "Trouble concentrating on things, such as reading the newspaper or watching television",
-    "Moving or speaking so slowly that other people could have noticed? Or the opposite — being so fidgety or restless that you have been moving around a lot more than usual",
-    "Thoughts that you would be better off dead or of hurting yourself in some way",
-  ];
-
-  const handleOptionSelect = (questionIndex, value) => {
-    const updatedAnswers = [...answers];
-    updatedAnswers[questionIndex] = value;
-    setAnswers(updatedAnswers);
+  // Save assessment to backend
+  const saveAssessment = async (totalScore, result) => {
+    try {
+      const response = await fetch('https://zenback-3.onrender.com/save-assessment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          score: totalScore,
+          result: result,
+          responses: answers,
+        }),
+      });
+      if (!response.ok) throw new Error('Failed to save assessment');
+    } catch (error) {
+      console.error('Error saving assessment:', error);
+    }
   };
 
-  const calculateResult = (score) => {
-    if (score <= 4) return "Minimal Depression";
-    if (score <= 9) return "Mild Depression";
-    if (score <= 14) return "Moderate Depression";
-    if (score <= 19) return "Moderately Severe Depression";
-    return "Severe Depression";
+  // Calculate PHQ-9 result
+  const calculateResults = (totalScore) => {
+    let result;
+    if (totalScore >= 20) result = { message: "Severe depression", color: "bg-red-500" };
+    else if (totalScore >= 15) result = { message: "Moderately severe depression", color: "bg-orange-500" };
+    else if (totalScore >= 10) result = { message: "Moderate depression", color: "bg-yellow-500" };
+    else if (totalScore >= 5) result = { message: "Mild depression", color: "bg-indigo-500" };
+    else result = { message: "Minimal or no depression", color: "bg-emerald-500" };
+    return { ...result, score: totalScore };
   };
 
-  const handleSubmit = async () => {
-    const score = answers.reduce((sum, val) => sum + (val ?? 0), 0);
-    const resultText = calculateResult(score);
-
-    setTotalScore(score);
-    setResult(resultText);
+  // When finished
+  const handleFinish = () => {
+    const totalScore = answers.reduce((sum, val) => sum + val, 0);
+    const result = calculateResults(totalScore);
+    saveAssessment(totalScore, result);
+    setResultData(result);
     setShowResults(true);
+  };
 
-    // Save assessment to backend
-    await fetch("https://zenback-3.onrender.com/save-assessment", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ score, result: resultText }),
-    });
-
-    // Auto schedule appointment for moderate to severe
-    if (score >= 15) {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const formattedDate = tomorrow.toISOString().split("T")[0];
-
-      try {
-        const response = await fetch("https://zenback-3.onrender.com/schedule", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ date: formattedDate }),
-        });
-
-        if (response.ok) {
-          setAppointmentDate(formattedDate);
-          setShowPopup(true);
-        } else {
-          console.error("Failed to schedule appointment");
-        }
-      } catch (err) {
-        console.error("Error scheduling appointment:", err);
+  // Schedule appointment
+  const scheduleAppointment = async () => {
+    if (!appointmentDate) return alert('Please select a date');
+    try {
+      const response = await fetch('https://zenback-3.onrender.com/schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ date: appointmentDate }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setPopup({ type: 'success', message: data.message });
+        setShowSchedule(false);
+      } else {
+        setPopup({ type: 'error', message: data.message });
       }
+    } catch (err) {
+      setPopup({ type: 'error', message: 'Failed to schedule appointment' });
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-100 p-6">
-      <div className="bg-white shadow-xl rounded-3xl p-8 w-full max-w-3xl">
-        <h1 className="text-3xl font-bold text-center text-indigo-700 mb-8">
-          PHQ-9 Depression Test
-        </h1>
+    <div className="relative min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white overflow-hidden">
+      <div className="max-w-2xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <Link to="/dashboard" className="flex items-center text-emerald-400 hover:underline mb-6">
+          <FaArrowLeft className="mr-2" /> Back to Dashboard
+        </Link>
 
-        {!showResults ? (
-          <>
-            {questions.map((question, qIndex) => (
-              <div key={qIndex} className="mb-6">
-                <p className="font-medium text-gray-800 mb-3">
-                  {qIndex + 1}. {question}
-                </p>
-                <div className="flex flex-wrap gap-3">
-                  {["Not at all", "Several days", "More than half the days", "Nearly every day"].map(
-                    (label, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleOptionSelect(qIndex, index)}
-                        className={`px-4 py-2 rounded-full border transition ${
-                          answers[qIndex] === index
-                            ? "bg-indigo-600 text-white"
-                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    )
-                  )}
-                </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-12"
+        >
+          <h2 className="text-4xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+            Mental Health Assessment (PHQ-9)
+          </h2>
+        </motion.div>
+
+        <div className="bg-white/5 backdrop-blur-md p-8 rounded-2xl border border-white/10 shadow-2xl">
+          {!showResults ? (
+            <>
+              {/* Progress Bar */}
+              <div className="relative h-2 bg-gray-700 rounded-full mb-8">
+                <div
+                  className="h-full bg-emerald-400 rounded-full transition-all"
+                  style={{ width: `${((currentQuestion + 1) / questions.length) * 100}%` }}
+                />
               </div>
-            ))}
 
-            <div className="text-center mt-8">
-              <button
-                onClick={handleSubmit}
-                disabled={answers.includes(null)}
-                className={`px-6 py-3 rounded-lg font-semibold transition ${
-                  answers.includes(null)
-                    ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                    : "bg-indigo-600 text-white hover:bg-indigo-700"
-                }`}
-              >
-                Submit
-              </button>
-            </div>
-          </>
-        ) : (
-          <div className="text-center">
-            <h2 className="text-2xl font-semibold text-indigo-700 mb-2">
-              {result}
-            </h2>
-            <p className="text-gray-700 mb-4">
-              Your total score: <b>{totalScore}</b>
-            </p>
-            {totalScore >= 15 && (
-              <p className="text-red-600 font-medium">
-                Based on your responses, a doctor appointment has been scheduled automatically.
-              </p>
-            )}
-            <button
-              onClick={() => window.location.reload()}
-              className="mt-6 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-            >
-              Take Again
-            </button>
-          </div>
-        )}
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentQuestion}
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                  className="w-full"
+                >
+                  <p className="text-gray-400 mb-2">
+                    Question {currentQuestion + 1} of {questions.length}:
+                  </p>
+                  <h3 className="text-xl font-medium text-white mb-6">
+                    {questions[currentQuestion]}
+                  </h3>
+
+                  <div className="space-y-4 mb-8">
+                    {["Not at all", "Several days", "More than half the days", "Nearly every day"].map(
+                      (label, idx) => (
+                        <div key={idx} className="flex items-center">
+                          <input
+                            type="radio"
+                            name={`question-${currentQuestion}`}
+                            value={idx}
+                            checked={answers[currentQuestion] === idx}
+                            onChange={() => {
+                              const newAnswers = [...answers];
+                              newAnswers[currentQuestion] = idx;
+                              setAnswers(newAnswers);
+                            }}
+                            className="mr-3 accent-emerald-400"
+                          />
+                          <label className="text-gray-300">{label}</label>
+                        </div>
+                      )
+                    )}
+                  </div>
+
+                  <div className="flex justify-between">
+                    <button
+                      onClick={() => setCurrentQuestion((p) => Math.max(0, p - 1))}
+                      disabled={currentQuestion === 0}
+                      className={`px-6 py-2 rounded-lg ${
+                        currentQuestion === 0
+                          ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                          : 'bg-emerald-400 text-gray-900'
+                      } transition-colors`}
+                    >
+                      Previous
+                    </button>
+
+                    <button
+                      onClick={() =>
+                        currentQuestion < questions.length - 1
+                          ? setCurrentQuestion((p) => p + 1)
+                          : handleFinish()
+                      }
+                      className="px-6 py-2 bg-emerald-400 text-gray-900 rounded-lg hover:bg-emerald-500 transition-colors"
+                    >
+                      {currentQuestion === questions.length - 1 ? 'Submit' : 'Next'}
+                    </button>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </>
+          ) : (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center p-8">
+              <h3 className="text-2xl font-semibold mb-4 text-white">Assessment Results</h3>
+              <div className={`${resultData.color} p-4 rounded-lg mb-6`}>
+                <p className="text-lg">{resultData.message}</p>
+                <p className="text-sm mt-2">Score: {resultData.score}</p>
+              </div>
+
+              <div className="space-y-4">
+                <button
+                  onClick={() => setShowSchedule(true)}
+                  className="px-6 py-2 bg-emerald-400 text-gray-900 rounded-lg hover:bg-emerald-500 transition-colors"
+                >
+                  Schedule Appointment
+                </button>
+                <button
+                  onClick={() => {
+                    setShowResults(false);
+                    setCurrentQuestion(0);
+                    setAnswers(Array(questions.length).fill(0));
+                  }}
+                  className="px-6 py-2 bg-gray-700 text-emerald-400 rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  Retake Assessment
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </div>
       </div>
 
-      {/* Popup Modal */}
-      {showPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-8 rounded-2xl shadow-2xl text-center w-96 transform scale-95 animate-fadeIn">
-            <h2 className="text-2xl font-semibold text-green-700 mb-3">
-              Appointment Scheduled ✅
-            </h2>
-            <p className="text-gray-700 mb-2">Your mental health matters.</p>
-            <p className="text-gray-600 mb-6">
-              Session scheduled for <b>{appointmentDate}</b>.
-            </p>
-            <button
-              onClick={() => setShowPopup(false)}
-              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+      {/* Schedule Popup */}
+      <AnimatePresence>
+        {showSchedule && (
+          <motion.div
+            className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="bg-gray-900 p-8 rounded-2xl border border-white/10 shadow-xl text-center"
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.8 }}
             >
-              Okay
-            </button>
-          </div>
-        </div>
-      )}
+              <h3 className="text-2xl mb-4 text-white">Schedule Appointment</h3>
+              <input
+                type="date"
+                className="p-2 rounded-lg bg-gray-800 text-white border border-gray-600 mb-4"
+                value={appointmentDate}
+                onChange={(e) => setAppointmentDate(e.target.value)}
+              />
+              <div className="flex justify-center gap-4">
+                <button
+                  onClick={scheduleAppointment}
+                  className="px-6 py-2 bg-emerald-400 text-gray-900 rounded-lg hover:bg-emerald-500 transition-colors"
+                >
+                  Confirm
+                </button>
+                <button
+                  onClick={() => setShowSchedule(false)}
+                  className="px-6 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <style>
-        {`
-          @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-          }
-          .animate-fadeIn {
-            animation: fadeIn 0.3s ease-out forwards;
-          }
-        `}
-      </style>
+      {/* Success/Error Popup */}
+      <AnimatePresence>
+        {popup && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className={`fixed top-6 right-6 px-6 py-3 rounded-xl shadow-lg ${
+              popup.type === 'success' ? 'bg-emerald-500' : 'bg-red-500'
+            } text-white`}
+          >
+            {popup.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
