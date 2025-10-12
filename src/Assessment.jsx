@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import { FaArrowLeft } from 'react-icons/fa';
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Link } from "react-router-dom";
+import { FaArrowLeft } from "react-icons/fa";
 
 const questions = [
   "Little interest or pleasure in doing things?",
@@ -20,38 +20,50 @@ const Assessment = () => {
   const [answers, setAnswers] = useState(Array(questions.length).fill(0));
   const [showResults, setShowResults] = useState(false);
   const [resultData, setResultData] = useState(null);
-  const [showSchedule, setShowSchedule] = useState(false);
-  const [appointmentDate, setAppointmentDate] = useState('');
-  const [popup, setPopup] = useState(null);
+  const [showDoctorPopup, setShowDoctorPopup] = useState(false);
+  const [selectedDoctor, setSelectedDoctor] = useState("");
 
-  // Auto-hide popup after 3 seconds
-  useEffect(() => {
-    if (popup) {
-      const timer = setTimeout(() => setPopup(null), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [popup]);
+  const doctors = ["Dr. Priya Sharma", "Dr. Rohan Mehta", "Dr. Anjali Patel", "Dr. Aarav Singh"];
 
-  // Save assessment to backend
+  // Save the assessment results to the backend
   const saveAssessment = async (totalScore, result) => {
     try {
-      const response = await fetch('https://zenback.onrender.com/save-assessment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          score: totalScore,
-          result: result,
-          responses: answers,
-        }),
+      const response = await fetch("https://zenback-3.onrender.com/save-assessment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ score: totalScore, result: result, responses: answers }),
       });
-      if (!response.ok) throw new Error('Failed to save assessment');
+      if (!response.ok) throw new Error("Failed to save assessment");
     } catch (error) {
-      console.error('Error saving assessment:', error);
+      console.error("Error saving assessment:", error);
     }
   };
 
-  // Calculate PHQ-9 result
+  // Schedule appointment (with selected doctor)
+  const scheduleAppointment = async () => {
+    try {
+      if (!selectedDoctor) {
+        alert("Please select a doctor first!");
+        return;
+      }
+      const today = new Date().toISOString().split("T")[0];
+      const response = await fetch("https://zenback-3.onrender.com/schedule", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ date: today, doctor: selectedDoctor }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Failed to schedule appointment");
+      alert(`✅ Appointment scheduled successfully with ${selectedDoctor}!`);
+      setShowDoctorPopup(false);
+    } catch (error) {
+      alert("❌ " + error.message);
+    }
+  };
+
+  // Calculate result
   const calculateResults = (totalScore) => {
     let result;
     if (totalScore >= 20) result = { message: "Severe depression", color: "bg-red-500" };
@@ -62,7 +74,6 @@ const Assessment = () => {
     return { ...result, score: totalScore };
   };
 
-  // Finish assessment
   const handleFinish = () => {
     const totalScore = answers.reduce((sum, val) => sum + val, 0);
     const result = calculateResults(totalScore);
@@ -70,54 +81,34 @@ const Assessment = () => {
     setResultData(result);
     setShowResults(true);
 
-    // Auto-prompt appointment if condition is serious
-    if (totalScore >= 10) {
-      setTimeout(() => setShowSchedule(true), 1500);
-      setPopup({
-        type: 'warning',
-        message: 'Your condition seems concerning. Please schedule an appointment.',
-      });
-    }
-  };
-
-  // Schedule appointment
-  const scheduleAppointment = async () => {
-    if (!appointmentDate) return alert('Please select a date');
-    try {
-      const response = await fetch('https://zenback.onrender.com/schedule', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ date: appointmentDate }),
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setPopup({ type: 'success', message: data.message });
-        setShowSchedule(false);
-      } else {
-        setPopup({ type: 'error', message: data.message });
-      }
-    } catch {
-      setPopup({ type: 'error', message: 'Failed to schedule appointment' });
+    // if condition is bad, open doctor popup
+    if (result.message === "Severe depression" || result.message === "Moderately severe depression" || result.message === "Moderate depression") {
+      setTimeout(() => {
+        setShowDoctorPopup(true);
+      }, 800);
     }
   };
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white overflow-hidden">
       <div className="max-w-2xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        {/* Back Link */}
         <Link to="/dashboard" className="flex items-center text-emerald-400 hover:underline mb-6">
           <FaArrowLeft className="mr-2" /> Back to Dashboard
         </Link>
 
+        {/* Header */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
           <h2 className="text-4xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
             Mental Health Assessment (PHQ-9)
           </h2>
         </motion.div>
 
+        {/* Assessment Card */}
         <div className="bg-white/5 backdrop-blur-md p-8 rounded-2xl border border-white/10 shadow-2xl">
           {!showResults ? (
             <>
+              {/* Progress Bar */}
               <div className="relative h-2 bg-gray-700 rounded-full mb-8">
                 <div
                   className="h-full bg-emerald-400 rounded-full transition-all"
@@ -136,137 +127,120 @@ const Assessment = () => {
                   <p className="text-gray-400 mb-2">
                     Question {currentQuestion + 1} of {questions.length}:
                   </p>
-                  <h3 className="text-xl font-medium text-white mb-6">
-                    {questions[currentQuestion]}
-                  </h3>
+                  <h3 className="text-xl font-medium text-white mb-6">{questions[currentQuestion]}</h3>
 
+                  {/* Answer Options */}
                   <div className="space-y-4 mb-8">
-                    {["Not at all", "Several days", "More than half the days", "Nearly every day"].map(
-                      (label, idx) => (
-                        <div key={idx} className="flex items-center">
-                          <input
-                            type="radio"
-                            name={`question-${currentQuestion}`}
-                            value={idx}
-                            checked={answers[currentQuestion] === idx}
-                            onChange={() => {
-                              const newAnswers = [...answers];
-                              newAnswers[currentQuestion] = idx;
-                              setAnswers(newAnswers);
-                            }}
-                            className="mr-3 accent-emerald-400"
-                          />
-                          <label className="text-gray-300">{label}</label>
-                        </div>
-                      )
-                    )}
+                    {["Not at all", "Several days", "More than half the days", "Nearly every day"].map((label, idx) => (
+                      <div key={idx} className="flex items-center">
+                        <input
+                          type="radio"
+                          name={`question-${currentQuestion}`}
+                          value={idx}
+                          checked={answers[currentQuestion] === idx}
+                          onChange={() => {
+                            const newAnswers = [...answers];
+                            newAnswers[currentQuestion] = idx;
+                            setAnswers(newAnswers);
+                          }}
+                          className="mr-3 accent-emerald-400"
+                        />
+                        <label className="text-gray-300">{label}</label>
+                      </div>
+                    ))}
                   </div>
 
+                  {/* Navigation Buttons */}
                   <div className="flex justify-between">
                     <button
                       onClick={() => setCurrentQuestion((p) => Math.max(0, p - 1))}
                       disabled={currentQuestion === 0}
                       className={`px-6 py-2 rounded-lg ${
-                        currentQuestion === 0
-                          ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                          : 'bg-emerald-400 text-gray-900'
+                        currentQuestion === 0 ? "bg-gray-600 text-gray-400 cursor-not-allowed" : "bg-emerald-400 text-gray-900"
                       } transition-colors`}
                     >
                       Previous
                     </button>
-
                     <button
                       onClick={() =>
-                        currentQuestion < questions.length - 1
-                          ? setCurrentQuestion((p) => p + 1)
-                          : handleFinish()
+                        currentQuestion < questions.length - 1 ? setCurrentQuestion((p) => p + 1) : handleFinish()
                       }
                       className="px-6 py-2 bg-emerald-400 text-gray-900 rounded-lg hover:bg-emerald-500 transition-colors"
                     >
-                      {currentQuestion === questions.length - 1 ? 'Submit' : 'Next'}
+                      {currentQuestion === questions.length - 1 ? "Submit" : "Next"}
                     </button>
                   </div>
                 </motion.div>
               </AnimatePresence>
             </>
           ) : (
+            // Results Section
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center p-8">
               <h3 className="text-2xl font-semibold mb-4 text-white">Assessment Results</h3>
               <div className={`${resultData.color} p-4 rounded-lg mb-6`}>
                 <p className="text-lg">{resultData.message}</p>
                 <p className="text-sm mt-2">Score: {resultData.score}</p>
               </div>
-
-              {resultData.score < 10 && (
-                <button
-                  onClick={() => setShowSchedule(true)}
-                  className="px-6 py-2 bg-emerald-400 text-gray-900 rounded-lg hover:bg-emerald-500 transition-colors"
-                >
-                  Schedule Appointment
-                </button>
-              )}
+              <button
+                onClick={() => {
+                  setShowResults(false);
+                  setCurrentQuestion(0);
+                  setAnswers(Array(questions.length).fill(0));
+                }}
+                className="px-6 py-2 bg-gray-700 text-emerald-400 rounded-lg hover:bg-gray-600 transition-colors"
+              >
+                Retake Assessment
+              </button>
             </motion.div>
           )}
         </div>
       </div>
 
-      {/* Schedule Popup */}
+      {/* Doctor Selection Popup */}
       <AnimatePresence>
-        {showSchedule && (
+        {showDoctorPopup && (
           <motion.div
-            className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
           >
             <motion.div
-              className="bg-gray-900 p-8 rounded-2xl border border-white/10 shadow-xl text-center"
-              initial={{ scale: 0.8 }}
+              initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
-              exit={{ scale: 0.8 }}
+              className="bg-gray-800 p-8 rounded-2xl shadow-2xl text-center w-96"
             >
-              <h3 className="text-2xl mb-4 text-white">Schedule Appointment</h3>
-              <input
-                type="date"
-                className="p-2 rounded-lg bg-gray-800 text-white border border-gray-600 mb-4"
-                value={appointmentDate}
-                onChange={(e) => setAppointmentDate(e.target.value)}
-              />
-              <div className="flex justify-center gap-4">
+              <h3 className="text-2xl font-bold mb-4 text-emerald-400">Your condition needs attention</h3>
+              <p className="text-gray-300 mb-6">Please choose a doctor to schedule your appointment:</p>
+
+              <select
+                className="w-full p-3 rounded-lg bg-gray-700 text-white mb-6"
+                value={selectedDoctor}
+                onChange={(e) => setSelectedDoctor(e.target.value)}
+              >
+                <option value="">Select a doctor</option>
+                {doctors.map((doc, idx) => (
+                  <option key={idx} value={doc}>
+                    {doc}
+                  </option>
+                ))}
+              </select>
+
+              <div className="flex justify-center space-x-4">
                 <button
-                  onClick={scheduleAppointment}
-                  className="px-6 py-2 bg-emerald-400 text-gray-900 rounded-lg hover:bg-emerald-500 transition-colors"
-                >
-                  Confirm
-                </button>
-                <button
-                  onClick={() => setShowSchedule(false)}
-                  className="px-6 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-colors"
+                  onClick={() => setShowDoctorPopup(false)}
+                  className="px-4 py-2 bg-gray-600 rounded-lg text-white hover:bg-gray-500"
                 >
                   Cancel
                 </button>
+                <button
+                  onClick={scheduleAppointment}
+                  className="px-4 py-2 bg-emerald-500 text-gray-900 rounded-lg hover:bg-emerald-400"
+                >
+                  Schedule
+                </button>
               </div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Popup */}
-      <AnimatePresence>
-        {popup && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className={`fixed top-6 right-6 px-6 py-3 rounded-xl shadow-lg text-white ${
-              popup.type === 'success'
-                ? 'bg-emerald-500'
-                : popup.type === 'warning'
-                ? 'bg-yellow-500'
-                : 'bg-red-500'
-            }`}
-          >
-            {popup.message}
           </motion.div>
         )}
       </AnimatePresence>
@@ -275,5 +249,4 @@ const Assessment = () => {
 };
 
 export default Assessment;
-
 
