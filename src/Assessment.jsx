@@ -28,7 +28,7 @@ const Assessment = () => {
   // Save the assessment results to the backend
   const saveAssessment = async (totalScore, result) => {
     try {
-      const response = await fetch("https://zenback-3.onrender.com/save-assessment", {
+      const response = await fetch("https://zenback.onrender.com/save-assessment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -48,7 +48,7 @@ const Assessment = () => {
         return;
       }
       const today = new Date().toISOString().split("T")[0];
-      const response = await fetch("https://zenback-3.onrender.com/schedule", {
+      const response = await fetch("https://zenback.onrender.com/schedule", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
