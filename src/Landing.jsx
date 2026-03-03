@@ -209,7 +209,7 @@ const Landing = () => {
             transition={{ duration: 1, delay: 0.5 }}
             className="max-w-xl mx-auto text-lg md:text-xl text-gray-300 mb-8"
           >
-            Discover personalized mental health assessments powered by AI and ML.
+            Discover personalized mental health assessments.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 30 }}
