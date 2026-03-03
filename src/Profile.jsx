@@ -344,7 +344,7 @@ const Profile = () => {
                            rounded-full border border-slate-700">
               <span className="text-sm text-slate-400">Member since</span>
               <span className="text-sm font-medium text-emerald-400">
-                {profileData.joinDate || 'Jan 2023'}
+                {profileData.joinDate || 'Feb 2026'}
               </span>
             </div>
           </div>
