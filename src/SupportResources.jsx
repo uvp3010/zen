@@ -95,7 +95,7 @@ const SupportResources = () => {
       </div>
 
       {/* Chatbot Component (assumed to match dashboard design) */}
-      <Chatbot isOpen={chatOpen} setChatOpen={setChatOpen} />
+      {/* <Chatbot isOpen={chatOpen} setChatOpen={setChatOpen} /> */}
     </div>
   );
 };
