@@ -38,7 +38,7 @@ const handleLogout = async () => {
   if (!confirmLogout) return;
 
   try {
-    const response = await fetch('https://zenback.onrender.com/logout', {
+    const response = await fetch('https://zenback-5.onrender.com/logout', {
       method: 'POST',
       credentials: 'include', // Important: keeps session cookie context
     });
