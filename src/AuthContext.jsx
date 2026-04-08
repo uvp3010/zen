@@ -14,7 +14,7 @@ export function AuthProvider({ children }) {
 
   const checkAuth = async () => {
     try {
-      const res = await fetch('https://zenback.onrender.com/dashboard', {
+      const res = await fetch('https://zenback-5.onrender.com/dashboard', {
         credentials: 'include'
       });
       if (res.ok) {
@@ -29,7 +29,7 @@ export function AuthProvider({ children }) {
   };
 
   const login = async (credentials) => {
-    const res = await fetch('http://localhost:5000/login', {
+    const res = await fetch('https://zenback-5.onrender.com/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(credentials),
@@ -43,7 +43,7 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
-    await fetch('http://localhost:5000/logout', {
+    await fetch('https://zenback-5.onrender.com/logout', {
       method: 'POST',
       credentials: 'include'
     });
