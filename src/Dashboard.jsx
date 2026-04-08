@@ -334,7 +334,7 @@ const Dashboard = () => {
   // Fetch dashboard data from your Flask backend
   const fetchDashboardData = async () => {
     try {
-      const response = await fetch('https://zenback.onrender.com/dashboard', {
+      const response = await fetch('https://zenback-5.onrender.com/dashboard', {
         credentials: 'include'
       });
       const data = await response.json();
