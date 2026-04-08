@@ -15,7 +15,7 @@ const SignUp = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post("https://zenback.onrender.com/register", {
+      const response = await axios.post("https://zenback-5.onrender.com/register", {
         username,
         password,
         age,
