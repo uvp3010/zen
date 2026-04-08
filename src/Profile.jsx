@@ -49,7 +49,7 @@ const Profile = () => {
   // Fetch profile data from the backend
   const fetchProfileData = async () => {
     try {
-      const response = await fetch('https://zenback.onrender.com/dashboard', {
+      const response = await fetch('https://zenback-5.onrender.com/dashboard', {
         credentials: 'include'
       });
       const data = await response.json();
@@ -92,7 +92,7 @@ const Profile = () => {
     const payload = { ...formData, avatar: avatarToSave };
 
     try {
-      const response = await fetch('https://zenback.onrender.com/update-profile', {
+      const response = await fetch('https://zenback-5.onrender.com/update-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
