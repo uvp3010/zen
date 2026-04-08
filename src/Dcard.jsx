@@ -78,7 +78,7 @@ const Dcard = ({ name, image, number, specialization, experience, bio }) => {
     }
     try {
       const scheduleResponse = await axios.post(
-        "https://zenback-3.onrender.com/schedule",
+        "https://zenback-5.onrender.com/schedule",
         { date },
         { withCredentials: true }
       );
