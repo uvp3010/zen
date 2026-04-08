@@ -386,7 +386,7 @@ const Task = () => {
   // Mark the active task as complete, update backend, and update local state
   const completeTask = () => {
     if (activeTask && !activeTask.completed) {
-      fetch("https://zenback.onrender.com/complete-task", {
+      fetch("https://zenback-5.onrender.com/complete-task", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
